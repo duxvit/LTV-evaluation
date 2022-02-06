@@ -19,9 +19,32 @@
 select round(sum(sale_amount)/count(id)) as mean
 from orders;
 
-Медиана      
+Медиана 
+*Если можно использовать percentile_cont:
 select percentile_cont(0.5) within group(order by sale_amount) median_total_per_user
 from orders
+
+*Если нельзя использовать percentile_cont
+With data as (
+  Select
+   *,
+   row_number() over (order by sale_amount) as rowNumber 
+  from orders 
+)
+select round(sum(t1.sale_amount)/count(t1.sale_amount))
+from
+(
+Select
+  * 
+from data
+where rowNumber in (
+  Select ceil((count(user_id)+1)/2.0)
+  from orders ) 
+  or
+      rowNumber in (
+  Select floor((count(user_id)+1)/2.0)
+  from orders)
+) t1
 -------------------------------------
 
 
